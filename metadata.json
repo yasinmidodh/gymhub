@@ -1,0 +1,6 @@
+{
+  "name": "Gym Workout Video Hub",
+  "description": "Sleek dark-themed gym workout video hub featuring role-based access, admin video & user management, muscle group filters, and interactive player modal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

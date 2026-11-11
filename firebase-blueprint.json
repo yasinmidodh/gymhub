@@ -1,0 +1,119 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Athlete or administrator profile in GymHub",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for user" },
+        "name": { "type": "string", "description": "Full name of the user" },
+        "email": { "type": "string", "description": "Login identifier or email" },
+        "password": { "type": "string", "description": "Account password" },
+        "role": { "type": "string", "enum": ["admin", "user"], "description": "Role in the system" },
+        "createdAt": { "type": "string", "description": "Account creation timestamp" },
+        "stage": { "type": "string", "enum": ["Normal", "Extra", "Premium"], "description": "Training stage tier" },
+        "avatarSeed": { "type": "string", "description": "Avatar seed for UI profile" }
+      },
+      "required": ["id", "name", "email", "password", "role", "stage"]
+    },
+    "WorkoutVideo": {
+      "title": "WorkoutVideo",
+      "description": "Strength & conditioning coaching workout video routine",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for workout routine" },
+        "title": { "type": "string", "description": "Descriptive workout title" },
+        "muscleGroup": { "type": "string", "description": "Target primary muscle group" },
+        "duration": { "type": "string", "description": "Formatted duration string e.g. 12:00" },
+        "durationMinutes": { "type": "number", "description": "Duration length in minutes" },
+        "deviceVideoId": { "type": "string", "description": "IndexedDB local media key" },
+        "deviceFileName": { "type": "string", "description": "Original file name uploaded from device" },
+        "deviceFileSizeMb": { "type": "number", "description": "Size in megabytes" },
+        "targetCalories": { "type": "number", "description": "Estimated calories burned (kcal)" },
+        "description": { "type": "string", "description": "Coaching instructions and execution guidance" },
+        "tips": { "type": "array", "description": "Array of biomechanical and safety tips" },
+        "difficulty": { "type": "string", "enum": ["Beginner", "Intermediate", "Advanced"], "description": "Routine difficulty" },
+        "trainerName": { "type": "string", "description": "Coach or trainer name" },
+        "requiredStage": { "type": "string", "enum": ["Normal", "Extra", "Premium"], "description": "Stage needed to unlock" },
+        "equipment": { "type": "string", "description": "Required gym apparatus or weights" },
+        "rpe": { "type": "number", "description": "Rate of perceived exertion (1-10)" }
+      },
+      "required": ["id", "title", "muscleGroup", "duration", "description", "tips"]
+    },
+    "StageRequest": {
+      "title": "StageRequest",
+      "description": "Athlete request submitted to Muhammad to enter a higher training stage",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique stage request identifier" },
+        "userId": { "type": "string", "description": "Requesting athlete ID" },
+        "userName": { "type": "string", "description": "Athlete full name" },
+        "userEmail": { "type": "string", "description": "Athlete email identifier" },
+        "currentStage": { "type": "string", "enum": ["Normal", "Extra", "Premium"], "description": "Current stage tier" },
+        "requestedStage": { "type": "string", "enum": ["Normal", "Extra", "Premium"], "description": "Target requested stage tier" },
+        "note": { "type": "string", "description": "Athlete request note for Muhammad" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "rejected"], "description": "Approval status" },
+        "createdAt": { "type": "string", "description": "Submission timestamp" },
+        "resolvedAt": { "type": "string", "description": "Resolution timestamp" },
+        "resolvedBy": { "type": "string", "description": "Admin who approved/rejected" }
+      },
+      "required": ["id", "userId", "userName", "currentStage", "requestedStage", "status"]
+    },
+    "UserProgress": {
+      "title": "UserProgress",
+      "description": "Completed workout tracking and 7-day logs for athlete",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Athlete user ID" },
+        "completedVideoIds": { "type": "array", "description": "List of completed workout video IDs" },
+        "recentlyWatchedIds": { "type": "array", "description": "Last 3 watched video IDs" },
+        "dailyCompletions": { "type": "object", "description": "Map of date keys to completed workout IDs" },
+        "updatedAt": { "type": "string", "description": "Last updated timestamp" }
+      },
+      "required": ["userId"]
+    },
+    "DailyNutritionLog": {
+      "title": "DailyNutritionLog",
+      "description": "Daily hydration and macro-nutrient tracking (water, protein, carbs, fats)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique nutrition log identifier" },
+        "userId": { "type": "string", "description": "Athlete user ID" },
+        "date": { "type": "string", "description": "Calendar log date (YYYY-MM-DD)" },
+        "waterMl": { "type": "number", "description": "Water consumed in milliliters" },
+        "waterGoalMl": { "type": "number", "description": "Daily water target in milliliters" },
+        "proteinGrams": { "type": "number", "description": "Protein consumed in grams" },
+        "proteinGoalGrams": { "type": "number", "description": "Daily protein target in grams" },
+        "carbsGrams": { "type": "number", "description": "Carbohydrates consumed in grams" },
+        "carbsGoalGrams": { "type": "number", "description": "Daily carbs target in grams" },
+        "fatsGrams": { "type": "number", "description": "Fats consumed in grams" },
+        "fatsGoalGrams": { "type": "number", "description": "Daily fats target in grams" },
+        "notes": { "type": "string", "description": "Optional notes or meal entries" },
+        "updatedAt": { "type": "string", "description": "Last update timestamp" }
+      },
+      "required": ["id", "userId", "date", "waterMl", "proteinGrams", "carbsGrams", "fatsGrams"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles and athlete credentials"
+    },
+    "/workoutVideos/{videoId}": {
+      "schema": { "$ref": "#/entities/WorkoutVideo" },
+      "description": "Coaching workout video library posted by coach Muhammad"
+    },
+    "/stageRequests/{requestId}": {
+      "schema": { "$ref": "#/entities/StageRequest" },
+      "description": "Stage upgrade requests for Muhammad review"
+    },
+    "/userProgress/{userId}": {
+      "schema": { "$ref": "#/entities/UserProgress" },
+      "description": "Individual athlete completion logs, streaks, and recently watched history"
+    },
+    "/nutritionLogs/{logId}": {
+      "schema": { "$ref": "#/entities/DailyNutritionLog" },
+      "description": "Athlete daily water and macro-nutrient logs"
+    }
+  }
+}

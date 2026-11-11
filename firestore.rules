@@ -1,0 +1,135 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: Default-deny all unhandled paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isBootstrappedAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'yasinmohamed53321@gmail.com' ||
+        (request.auth.token.email_verified == true && request.auth.token.email == 'yasinmohamed53321@gmail.com')
+      );
+    }
+
+    // --- USERS COLLECTION ---
+    match /users/{userId} {
+      allow get, list: if true;
+
+      allow create: if isValidId(userId) &&
+        incoming().keys().hasAll(['id', 'name', 'email', 'password', 'role', 'stage']) &&
+        incoming().keys().hasOnly(['id', 'name', 'email', 'password', 'role', 'createdAt', 'stage', 'avatarSeed', 'workoutNotes', 'dailyCalorieGoal']) &&
+        incoming().id is string && incoming().id.size() <= 128 &&
+        incoming().name is string && incoming().name.size() > 0 && incoming().name.size() <= 100 &&
+        incoming().email is string && incoming().email.size() > 0 && incoming().email.size() <= 100 &&
+        incoming().password is string && incoming().password.size() > 0 && incoming().password.size() <= 100 &&
+        incoming().role in ['admin', 'user'] &&
+        incoming().stage in ['Normal', 'Extra', 'Premium'];
+
+      allow update: if isValidId(userId) &&
+        incoming().keys().hasAll(['id', 'name', 'email', 'password', 'role', 'stage']) &&
+        incoming().keys().hasOnly(['id', 'name', 'email', 'password', 'role', 'createdAt', 'stage', 'avatarSeed', 'workoutNotes', 'dailyCalorieGoal']) &&
+        incoming().id == existing().id &&
+        incoming().stage in ['Normal', 'Extra', 'Premium'];
+
+      // Protect primary admin from deletion
+      allow delete: if isValidId(userId) && userId != 'user-admin-muhammad';
+    }
+
+    // --- WORKOUT VIDEOS COLLECTION ---
+    match /workoutVideos/{videoId} {
+      allow get, list: if true;
+
+      allow create: if isValidId(videoId) &&
+        incoming().keys().hasAll(['id', 'title', 'muscleGroup', 'duration', 'description', 'tips']) &&
+        incoming().id is string && incoming().id.size() <= 128 &&
+        incoming().title is string && incoming().title.size() > 0 && incoming().title.size() <= 200 &&
+        incoming().muscleGroup is string && incoming().muscleGroup.size() <= 50 &&
+        incoming().duration is string && incoming().duration.size() <= 20 &&
+        incoming().description is string && incoming().description.size() <= 5000 &&
+        incoming().tips is list && incoming().tips.size() <= 20;
+
+      allow update: if isValidId(videoId) &&
+        incoming().keys().hasAll(['id', 'title', 'muscleGroup', 'duration', 'description', 'tips']) &&
+        incoming().id == existing().id &&
+        incoming().title is string && incoming().title.size() > 0 && incoming().title.size() <= 200 &&
+        incoming().description is string && incoming().description.size() <= 5000 &&
+        incoming().tips is list && incoming().tips.size() <= 20;
+
+      allow delete: if isValidId(videoId);
+    }
+
+    // --- STAGE REQUESTS COLLECTION ---
+    match /stageRequests/{requestId} {
+      allow get, list: if true;
+
+      allow create: if isValidId(requestId) &&
+        incoming().keys().hasAll(['id', 'userId', 'userName', 'currentStage', 'requestedStage', 'status']) &&
+        incoming().id is string && incoming().id.size() <= 128 &&
+        incoming().userId is string && incoming().userId.size() <= 128 &&
+        incoming().currentStage in ['Normal', 'Extra', 'Premium'] &&
+        incoming().requestedStage in ['Normal', 'Extra', 'Premium'] &&
+        incoming().status in ['pending', 'accepted', 'rejected'];
+
+      allow update: if isValidId(requestId) &&
+        incoming().keys().hasAll(['id', 'userId', 'userName', 'currentStage', 'requestedStage', 'status']) &&
+        incoming().id == existing().id &&
+        incoming().userId == existing().userId &&
+        incoming().status in ['pending', 'accepted', 'rejected'];
+
+      allow delete: if isValidId(requestId);
+    }
+
+    // --- USER PROGRESS COLLECTION ---
+    match /userProgress/{userId} {
+      allow get, list: if true;
+
+      allow create, update: if isValidId(userId) &&
+        incoming().keys().hasAll(['userId']) &&
+        incoming().userId is string && incoming().userId.size() <= 128;
+
+      allow delete: if isValidId(userId);
+    }
+
+    // --- PROGRESS PHOTOS COLLECTION ---
+    match /progressPhotos/{photoId} {
+      allow get, list: if true;
+
+      allow create, update: if isValidId(photoId) &&
+        incoming().keys().hasAll(['id', 'userId', 'userName']) &&
+        incoming().id is string && incoming().id.size() <= 128;
+
+      allow delete: if isValidId(photoId);
+    }
+
+    // --- NUTRITION LOGS COLLECTION ---
+    match /nutritionLogs/{logId} {
+      allow get, list: if true;
+
+      allow create, update: if isValidId(logId) &&
+        incoming().keys().hasAll(['id', 'userId', 'date', 'waterMl', 'proteinGrams', 'carbsGrams', 'fatsGrams']) &&
+        incoming().id is string && incoming().id.size() <= 128 &&
+        incoming().userId is string && incoming().userId.size() <= 128;
+
+      allow delete: if isValidId(logId);
+    }
+  }
+}
