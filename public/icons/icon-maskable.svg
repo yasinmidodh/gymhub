@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Solid background extending to all edges for Android maskable cropping -->
+  <rect width="512" height="512" fill="#000000"/>
+  <circle cx="256" cy="256" r="190" fill="#00E5FF" fill-opacity="0.12"/>
+  <!-- Central Dumbbell Icon safely centered within safe zone (80px padding) -->
+  <g transform="translate(136, 150) scale(3.0)" stroke="#00E5FF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <line x1="16" y1="40" x2="64" y2="40" stroke="#FFFFFF" stroke-width="7"/>
+    <rect x="8" y="16" width="8" height="48" rx="3" fill="#00E5FF"/>
+    <rect x="18" y="24" width="6" height="32" rx="2" fill="#38BDF8"/>
+    <rect x="64" y="16" width="8" height="48" rx="3" fill="#00E5FF"/>
+    <rect x="56" y="24" width="6" height="32" rx="2" fill="#38BDF8"/>
+  </g>
+  <text x="256" y="380" fill="#FFFFFF" font-family="'Plus Jakarta Sans', sans-serif" font-weight="900" font-size="44" letter-spacing="4" text-anchor="middle">GYM <tspan fill="#00E5FF">APP</tspan></text>
+</svg>

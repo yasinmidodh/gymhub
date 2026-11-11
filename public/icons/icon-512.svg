@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00E5FF"/>
+      <stop offset="100%" stop-color="#38BDF8"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00E5FF" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="100" fill="#000000"/>
+  <circle cx="256" cy="256" r="220" fill="url(#glow)"/>
+  <rect x="16" y="16" width="480" height="480" rx="90" fill="none" stroke="url(#grad)" stroke-width="4" stroke-opacity="0.4"/>
+  <!-- Central Dumbbell Icon -->
+  <g transform="translate(106, 126) scale(3.8)" stroke="#00E5FF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <line x1="16" y1="40" x2="64" y2="40" stroke="#FFFFFF" stroke-width="7"/>
+    <!-- Grip grooves -->
+    <line x1="36" y1="38" x2="36" y2="42" stroke="#00E5FF" stroke-width="2"/>
+    <line x1="44" y1="38" x2="44" y2="42" stroke="#00E5FF" stroke-width="2"/>
+    <!-- Left Plates -->
+    <rect x="8" y="16" width="8" height="48" rx="3" fill="#00E5FF"/>
+    <rect x="18" y="24" width="6" height="32" rx="2" fill="#38BDF8"/>
+    <!-- Right Plates -->
+    <rect x="64" y="16" width="8" height="48" rx="3" fill="#00E5FF"/>
+    <rect x="56" y="24" width="6" height="32" rx="2" fill="#38BDF8"/>
+  </g>
+  <text x="256" y="420" fill="#FFFFFF" font-family="'Plus Jakarta Sans', sans-serif" font-weight="900" font-size="52" letter-spacing="4" text-anchor="middle">GYM <tspan fill="#00E5FF">APP</tspan></text>
+</svg>
