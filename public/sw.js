@@ -3,11 +3,14 @@
  * Provides offline shell caching and network-first data resilience
  */
 
-const CACHE_NAME = 'gymapp-v1-cache';
+const CACHE_NAME = 'gymapp-v2-cache';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/icon-maskable-512.png',
   './icons/icon-192.svg',
   './icons/icon-512.svg',
   './icons/icon-maskable.svg'
@@ -38,6 +41,7 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
+  if (!url.protocol.startsWith('http')) return;
 
   // Bypass Google API calls, analytics, and dev sockets
   if (
@@ -65,7 +69,8 @@ self.addEventListener('fetch', (event) => {
         const cached = await caches.match(event.request);
         if (cached) return cached;
         if (event.request.mode === 'navigate') {
-          return caches.match('./index.html') || caches.match('./');
+          const shell = (await caches.match('./index.html')) || (await caches.match('./'));
+          if (shell) return shell;
         }
         return new Response('Offline', { status: 503, statusText: 'Offline' });
       })

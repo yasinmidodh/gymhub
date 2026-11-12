@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, Smartphone, Download, Share, CheckCircle2, 
-  ExternalLink, ArrowRight, ShieldCheck, Zap, Sparkles 
+  ExternalLink, ArrowRight, ShieldCheck, Zap, Sparkles,
+  Copy, Send, MessageCircle
 } from 'lucide-react';
 import { ThemeSettings, hexToRgb } from '../utils/theme';
 import { triggerHaptic, playButtonClickSound, playSuccessChime } from '../utils/media';
+import { buildShareMessage, getCleanAppUrl, ShareLang } from '../utils/shareInstructions';
 
 interface InstallPwaModalProps {
   isOpen: boolean;
@@ -19,7 +21,29 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({
 }) => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
-  const [activeTab, setActiveTab] = useState<'android' | 'ios' | 'apk'>('android');
+  const [activeTab, setActiveTab] = useState<'android' | 'ios' | 'apk' | 'share'>('android');
+  const [shareLang, setShareLang] = useState<ShareLang>('en');
+  const [apkUrl, setApkUrl] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  // Remember the APK download link the coach pasted (this device only)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('gymapp-apk-link');
+      if (saved) setApkUrl(saved);
+    } catch {
+      /* storage can be unavailable */
+    }
+  }, []);
+
+  const handleApkUrlChange = (value: string) => {
+    setApkUrl(value);
+    try {
+      localStorage.setItem('gymapp-apk-link', value);
+    } catch {
+      /* ignore */
+    }
+  };
 
   const isDark = themeSettings ? themeSettings.mode === 'dark' : true;
   const accentColor = themeSettings?.accentHex || '#00E5FF';
@@ -39,7 +63,10 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
     window.addEventListener('appinstalled', handleAppInstalled);
 
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    if (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (navigator as any).standalone === true
+    ) {
       setIsInstalled(true);
     }
 
@@ -68,6 +95,47 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({
       alert('To install, open your browser menu (⋮) and tap "Install app" or "Add to Home screen".');
     }
   };
+
+  const shareMessage = buildShareMessage({
+    appUrl: getCleanAppUrl(window.location.href),
+    apkUrl,
+    lang: shareLang,
+  });
+
+  const handleCopyMessage = async () => {
+    triggerHaptic(30);
+    playButtonClickSound();
+    try {
+      await navigator.clipboard.writeText(shareMessage);
+    } catch {
+      // Fallback for browsers without clipboard permission
+      const area = document.createElement('textarea');
+      area.value = shareMessage;
+      document.body.appendChild(area);
+      area.select();
+      try { document.execCommand('copy'); } catch { /* ignore */ }
+      document.body.removeChild(area);
+    }
+    setCopied(true);
+    playSuccessChime();
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleWhatsApp = () => {
+    triggerHaptic(30);
+    window.open(`https://wa.me/?text=${encodeURIComponent(shareMessage)}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleNativeShare = async () => {
+    triggerHaptic(30);
+    try {
+      await navigator.share({ title: 'GYM App', text: shareMessage });
+    } catch {
+      /* user cancelled */
+    }
+  };
+
+  const canNativeShare = typeof navigator !== 'undefined' && typeof (navigator as any).share === 'function';
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
@@ -161,6 +229,19 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({
             }`}
           >
             APK Package
+          </button>
+          <button
+            onClick={() => {
+              triggerHaptic(20);
+              setActiveTab('share');
+            }}
+            className={`flex-1 py-2 rounded-lg transition-all cursor-pointer text-center ${
+              activeTab === 'share'
+                ? 'bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm font-bold'
+                : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-300'
+            }`}
+          >
+            Send
           </button>
         </div>
 
@@ -272,6 +353,101 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({
                 <span>Open PWABuilder.com</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </a>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 4: Ready-to-send message for a new athlete */}
+        {activeTab === 'share' && (
+          <div className="space-y-4">
+            <div className={`p-4 rounded-xl border space-y-3 ${
+              isDark ? 'bg-[#060910] border-slate-800' : 'bg-slate-50 border-slate-200'
+            }`}>
+              <div className="flex items-center gap-2 font-bold text-sm text-slate-900 dark:text-white">
+                <Send className="w-4 h-4" style={{ color: accentColor }} />
+                <span>Message to send to a new athlete</span>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Copy this text and send it by WhatsApp or SMS. It has the app link and the install steps for iPhone and Android.
+              </p>
+
+              {/* Language switch */}
+              <div className="flex items-center gap-1.5 p-1 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold">
+                <button
+                  onClick={() => setShareLang('en')}
+                  className={`flex-1 py-1.5 rounded-md cursor-pointer ${
+                    shareLang === 'en' ? 'bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm font-bold' : 'text-slate-500'
+                  }`}
+                >
+                  English
+                </button>
+                <button
+                  onClick={() => setShareLang('ar')}
+                  className={`flex-1 py-1.5 rounded-md cursor-pointer ${
+                    shareLang === 'ar' ? 'bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm font-bold' : 'text-slate-500'
+                  }`}
+                >
+                  العربية
+                </button>
+              </div>
+
+              {/* Optional APK link */}
+              <div>
+                <label htmlFor="apk-link" className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                  APK download link (optional, for Android)
+                </label>
+                <input
+                  id="apk-link"
+                  type="url"
+                  value={apkUrl}
+                  onChange={(e) => handleApkUrlChange(e.target.value)}
+                  placeholder="Paste the Google Drive / Dropbox link of the APK"
+                  className={`w-full px-3 py-2 rounded-lg border text-xs outline-none ${
+                    isDark ? 'bg-slate-950 border-slate-800 text-slate-100 placeholder-slate-600' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
+                  }`}
+                />
+              </div>
+
+              <textarea
+                readOnly
+                value={shareMessage}
+                dir={shareLang === 'ar' ? 'rtl' : 'ltr'}
+                rows={12}
+                className={`w-full px-3 py-2 rounded-lg border text-xs leading-relaxed font-mono resize-none outline-none ${
+                  isDark ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-white border-slate-300 text-slate-800'
+                }`}
+                aria-label="Install message"
+              />
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={handleCopyMessage}
+                  className="py-2.5 px-3 rounded-xl text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-transform active:scale-95 cursor-pointer min-h-[44px]"
+                  style={{ backgroundColor: accentColor }}
+                >
+                  {copied ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  <span>{copied ? 'Copied!' : 'Copy message'}</span>
+                </button>
+                <button
+                  onClick={handleWhatsApp}
+                  className="py-2.5 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-transform active:scale-95 cursor-pointer min-h-[44px]"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>WhatsApp</span>
+                </button>
+              </div>
+
+              {canNativeShare && (
+                <button
+                  onClick={handleNativeShare}
+                  className={`w-full py-2.5 px-3 rounded-xl border font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer min-h-[44px] ${
+                    isDark ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <Share className="w-4 h-4" />
+                  <span>Share via other apps</span>
+                </button>
+              )}
             </div>
           </div>
         )}
